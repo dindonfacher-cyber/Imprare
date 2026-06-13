@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apprendre l'Italien - Version Complète</title>
+    <style>
+        :root {
+            --primary: #009246; /* Vert italien */
+            --secondary: #ce2b37; /* Rouge italien */
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--light);
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-nav {
+            background-color: #e0e0e0;
+            color: var(--dark);
+            flex: 1;
+        }
+
+        .btn-nav.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-action {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .test-box {
+            text-align: center;
+            font-size: 20px;
+            margin: 20px 0;
+        }
+
+        .input-text {
+            width: 80%;
+            padding: 12px;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .feedback {
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .correct { background-color: #d4edda; color: #155724; }
+        .incorrect { background-color: #f8d7da; color: #721c24; }
+        .info-count { font-size: 14px; color: #666; margin-top: -15px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Imparare l'Italiano 🇮🇹</h1>
+        <p>Grandes listes de vocabulaire pour débutants</p>
+    </header>
+
+    <nav>
+        <button class="btn-nav active" onclick="switchSection('listes')">Listes de vocabulaire</button>
+        <button class="btn-nav" onclick="switchSection('test')">Faire un test</button>
+        <button class="btn-nav" onclick="switchSection('erreurs')">Mes erreurs (<span id="error-count">0</span>)</button>
+    </nav>
+
+    <!-- SECTION 1 : LISTES -->
+    <section id="section-listes" class="card">
+        <h2>Choisissez un thème à étudier</h2>
+        <select id="select-theme" onchange="loadVocabTable()"></select>
+        <div id="count-vocab" class="info-count"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Français</th>
+                    <th>Italien</th>
+                </tr>
+            </thead>
+            <tbody id="vocab-body"></tbody>
+        </table>
+    </section>
+
+    <!-- SECTION 2 : TEST -->
+    <section id="section-test" class="card hidden">
+        <h2>Test de traduction</h2>
+        <div id="test-setup">
+            <p>Choisissez une liste pour le test :</p>
+            <select id="select-theme-test"></select>
+            <button class="btn-action" onclick="startTest('normal')">Démarrer le test</button>
+        </div>
+        <div id="test-core" class="hidden">
+            <div class="info-count" id="test-progress"></div>
+            <div class="test-box">
+                <p>Traduisez en italien :</p>
+                <strong id="word-to-translate" style="font-size: 26px; color: var(--secondary);"></strong>
+            </div>
+            <input type="text" id="user-answer" class="input-text" placeholder="Saisissez la traduction..." autocomplete="off">
+            <br>
+            <button class="btn-action" onclick="checkAnswer()">Valider</button>
+            <div id="feedback" class="feedback hidden"></div>
+        </div>
+    </section>
+
+    <!-- SECTION 3 : ERREURS -->
+    <section id="section-erreurs" class="card hidden">
+        <h2>Carnet d'erreurs personnalisé</h2>
+        <p>Révisez de manière ciblée les mots qui vous ont posé des difficultés.</p>
+        <button class="btn-action" id="btn-test-errors" onclick="startTest('errors')" style="margin-bottom: 20px;">Tester mes erreurs</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Français</th>
+                    <th>Traduction correcte (Italien)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="error-body"></tbody>
+        </table>
+    </section>
+</div>
+
+<script>
+const vocabulaire = {
+    "1. Les couleurs et nuances": [
+        {fr: "Rouge", it: "Rosso"}, {fr: "Bleu", it: "Blu"}, {fr: "Vert", it: "Verde"},
+        {fr: "Jaune", it: "Giallo"}, {fr: "Noir", it: "Nero"}, {fr: "Blanc", it: "Bianco"},
+        {fr: "Gris", it: "Grigio"}, {fr: "Marron", it: "Marrone"}, {fr: "Rose", it: "Rosa"},
+        {fr: "Orange", it: "Arancione"}, {fr: "Violet", it: "Viola"}, {fr: "Clair", it: "Chiaro"},
+        {fr: "Foncé", it: "Scuro"}, {fr: "Argenté", it: "Argentato"}, {fr: "Doré", it: "Dorato"},
+        {fr: "Bleu ciel", it: "Celeste"}, {fr: "Turquoise", it: "Turchese"}, {fr: "Beige", it: "Beige"},
+        {fr: "Multicolore", it: "Multicolore"}, {fr: "La couleur", it: "Il colore"}
+    ],
+    "2. Les vêtements et accessoires": [
+        {fr: "Une chemise", it: "Una camicia"}, {fr: "Un pantalon", it: "Un paio di pantaloni"},
+        {fr: "Des chaussures", it: "Scarpe"}, {fr: "Une robe", it: "Un vestito"}, {fr: "Une veste", it: "Una giacca"},
+        {fr: "Un manteau", it: "Un cappotto"}, {fr: "Une jupe", it: "Una gonna"}, {fr: "Un t-shirt", it: "Una maglietta"},
+        {fr: "Un pull", it: "Un maglione"}, {fr: "Des chaussettes", it: "Calze"}, {fr: "Un chapeau", it: "Un cappello"},
+        {fr: "Une écharpe", it: "Una sciarpa"}, {fr: "Des gants", it: "Guanti"}, {fr: "Une ceinture", it: "Una cintura"},
+        {fr: "Un sac", it: "Una borsa"}, {fr: "Des lunettes", it: "Occhiali"}, {fr: "Un portefeuille", it: "Un portafoglio"},
+        {fr: "Une montre", it: "Un orologio"}, {fr: "Un pyjama", it: "Un pigiama"}, {fr: "Un maillot de bain", it: "Un costume da bagno"},
+        {fr: "Des baskets", it: "Scarpe da ginnastica"}, {fr: "Un parapluie", it: "Un ombrello"}, {fr: "S'habiller", it: "Vestirsi"}
+    ],
+    "3. La cuisine (ustensiles et verbes)": [
+        {fr: "Une assiette", it: "Un piatto"}, {fr: "Un verre", it: "Un bicchiere"},
+        {fr: "Une fourchette", it: "Una forchetta"}, {fr: "Un couteau", it: "Un coltello"},
+        {fr: "Une cuillère", it: "Un cucchiaio"}, {fr: "Une poêle", it: "Una padella"},
+        {fr: "Une casserole", it: "Una pentola"}, {fr: "Une tasse", it: "Una tazza"},
+        {fr: "Une serviette", it: "Un tovagliolo"}, {fr: "La table", it: "Il tavolo"},
+        {fr: "Une bouteille", it: "Una bottiglia"}, {fr: "Le four", it: "Il forno"},
+        {fr: "Le réfrigérateur", it: "Il frigorifero"}, {fr: "Cuisiner", it: "Cucinare"},
+        {fr: "Manger", it: "Mangiare"}, {fr: "Boire", it: "Bere"},
+        {fr: "Couper", it: "Tagliare"}, {fr: "Chauffer", it: "Scaldare"},
+        {fr: "Laver la vaisselle", it: "Lavare i piatti"}, {fr: "Le petit-déjeuner", it: "La colazione"},
+        {fr: "Le déjeuner", it: "Il pranzo"}, {fr: "Le dîner", it: "La cena"},
+        {fr: "Une recette", it: "Una ricetta"}
+    ],
+    "4. Les pièces de la maison et mobilier": [
+        {fr: "Le salon", it: "Il soggiorno"}, {fr: "La chambre", it: "La camera da letto"},
+        {fr: "La cuisine", it: "La cucina"}, {fr: "La salle de bain", it: "Il bagno"},
+        {fr: "L'entrée", it: "L'ingresso"}, {fr: "Le couloir", it: "Il corridoio"},
+        {fr: "Le jardin", it: "Il giardino"}, {fr: "Le balcon", it: "Il balcone"},
+        {fr: "Le garage", it: "Il garage"}, {fr: "Le lit", it: "Il letto"},
+        {fr: "Une armoire", it: "Un armadio"}, {fr: "Une chaise", it: "Una sedia"},
+        {fr: "Le canapé", it: "Il divano"}, {fr: "Une lampe", it: "Una lampada"},
+        {fr: "La fenêtre", it: "La finestra"}, {fr: "La porte", it: "La porta"},
+        {fr: "Le mur", it: "Il muro"}, {fr: "Le toit", it: "Il tetto"},
+        {fr: "La télévision", it: "La televisione"}, {fr: "Un miroir", it: "Uno specchio"},
+        {fr: "Un tapis", it: "Un tappeto"}, {fr: "La clé", it: "La chiave"}
+    ],
+    "5. Les endroits de la ville": [
+        {fr: "La gare", it: "La stazione"}, {fr: "L'hôtel", it: "L'albergo"},
+        {fr: "Le restaurant", it: "Il ristorante"}, {fr: "Le supermarché", it: "Il supermercato"},
+        {fr: "La place", it: "La piazza"}, {fr: "La rue", it: "La strada"},
+        {fr: "L'école", it: "La scuola"}, {fr: "L'église", it: "La chiesa"},
+        {fr: "La pharmacie", it: "La farmacia"}, {fr: "L'hôpital", it: "L'ospedale"},
+        {fr: "La banque", it: "La banca"}, {fr: "Le parc", it: "Il parco"},
+        {fr: "Le musée", it: "Il museo"}, {fr: "Le cinéma", it: "Il cinema"},
+        {fr: "Le café (lieu)", it: "Il bar"}, {fr: "La boulangerie", it: "Il panificio"},
+        {fr: "La poste", it: "L'ufficio postale"}, {fr: "La plage", it: "La spiaggia"},
+        {fr: "Le pont", it: "Il ponte"}, {fr: "Le centre-ville", it: "Il centro città"},
+        {fr: "La bibliothèque", it: "La biblioteca"}, {fr: "Le marché", it: "Il mercato"}
+    ],
+    "6. Les salutations et formules de politesse": [
+        {fr: "Bonjour (matin)", it: "Buongiorno"}, {fr: "Salut / Au revoir", it: "Ciao"},
+        {fr: "Bonsoir", it: "Buonasera"}, {fr: "S'il vous plaît", it: "Per favore"},
+        {fr: "Merci", it: "Grazie"}, {fr: "De rien", it: "Prego"},
+        {fr: "Bonne nuit", it: "Buonanotte"}, {fr: "Au revoir (formel)", it: "Arrivederci"},
+        {fr: "À bientôt", it: "A presto"}, {fr: "Enchanté", it: "Piacere"},
+        {fr: "Comment ça va ?", it: "Come va ?"}, {fr: "Ça va bien", it: "Va bene"},
+        {fr: "Oui", it: "Sì"}, {fr: "Non", it: "No"},
+        {fr: "Excusez-moi", it: "Mi scusi"}, {fr: "Pardon", it: "Scusa"},
+        {fr: "Bon voyage", it: "Buon viaggio"}, {fr: "Bon appétit", it: "Buon appetito"},
+        {fr: "Félicitations", it: "Congratulazioni"}, {fr: "Bonne chance", it: "Buona fortuna"}
+    ],
+    "7. Les nombres de 1 à 30": [
+        {fr: "Un", it: "Uno"}, {fr: "Deux", it: "Due"}, {fr: "Trois", it: "Tre"}, {fr: "Quatre", it: "Quattro"},
+        {fr: "Cinq", it: "Cinque"}, {fr: "Six", it: "Sei"}, {fr: "Sept", it: "Sette"}, {fr: "Huit", it: "Otto"},
+        {fr: "Neuf", it: "Nove"}, {fr: "Dix", it: "Dieci"}, {fr: "Onze", it: "Undici"}, {fr: "Douze", it: "Dodici"},
+        {fr: "Treize", it: "Tredici"}, {fr: "Quatorze", it: "Quattordici"}, {fr: "Quinze", it: "Quindici"},
+        {fr: "Seize", it: "Sedici"}, {fr: "Dix-sept", it: "Diciassette"}, {fr: "Dix-huit", it: "Diciotto"},
+        {fr: "Dix-neuf", it: "Diciannove"}, {fr: "Vingt", it: "Venti"}, {fr: "Vingt et un", it: "Ventuno"},
+        {fr: "Vingt-deux", it: "Ventidue"}, {fr: "Vingt-trois", it: "Ventitré"}, {fr: "Vingt-quatre", it: "Ventiquattro"},
+        {fr: "Vingt-cinq", it: "Venticinque"}, {fr: "Vingt-six", it: "Ventisei"}, {fr: "Vingt-sept", it: "Ventisette"},
+        {fr: "Vingt-huit", it: "Ventotto"}, {fr: "Vingt-neuf", it: "Ventidue"}, {fr: "Trente", it: "Trenta"}
+    ],
+    "8. La nourriture (ingrédients de base)": [
+        {fr: "Le pain", it: "Il pane"}, {fr: "Le fromage", it: "Il formaggio"},
+        {fr: "Les pâtes", it: "La pasta"}, {fr: "La viande", it: "La carne"},
+        {fr: "Le poisson", it: "Il pesce"}, {fr: "Le poulet", it: "Il pollo"},
+        {fr: "Le riz", it: "Il riso"}, {fr: "Le sel", it: "Il sale"},
+        {fr: "Le poivre", it: "Il pepe"}, {fr: "L'huile d'olive", it: "L'olio d'oliva"},
+        {fr: "Le beurre", it: "Il burro"}, {fr: "Le sucre", it: "Lo zucchero"},
+        {fr: "L'œuf", it: "L'uovo"}, {fr: "La farine", it: "La farina"},
+        {fr: "La sauce", it: "La salsa"}, {fr: "La pizza", it: "La pizza"},
+        {fr: "Le jambon", it: "Il prosciutto"}, {fr: "Le légume", it: "La verdura"},
+        {fr: "Le fruit", it: "La frutta"}, {fr: "Le gâteau", it: "La torta"},
+        {fr: "La glace", it: "Il gelato"}, {fr: "Le chocolat", it: "Il cioccolato"}
+    ],
+    "9. Les boissons": [
+        {fr: "L'eau", it: "L'acqua"}, {fr: "Le vin", it: "Il vino"},
+        {fr: "Le café", it: "Il caffè"}, {fr: "Le lait", it: "Il latte"},
+        {fr: "Le jus de fruit", it: "Il succo di frutta"}, {fr: "Le thé", it: "Il tè"},
+        {fr: "La bière", it: "La birra"}, {fr: "L'eau gazeuse", it: "L'acqua frizzante"},
+        {fr: "L'eau plate", it: "L'acqua naturale"}, {fr: "Le soda", it: "La gassosa"},
+        {fr: "Un glaçon", it: "Un cubetto di ghiaccio"}, {fr: "Une boisson chaude", it: "Una bevanda calda"},
+        {fr: "Le sucre (pour boisson)", it: "Lo zucchero"}, {fr: "Une infusion", it: "Una tisana"},
+        {fr: "Le verre d'eau", it: "Il bicchiere d'acqua"}, {fr: "La tasse de thé", it: "La tazza di tè"},
+        {fr: "Un apéritif", it: "Un aperitivo"}, {fr: "Le champagne / mousseux", it: "Lo spumante"},
+        {fr: "Le jus de tomate", it: "Il succo di pomodoro"}, {fr: "Boire un coup", it: "Bere un bicchiere"}
+    ],
+    "10. Le temps et le calendrier": [
+        {fr: "Aujourd'hui", it: "Oggi"}, {fr: "Demain", it: "Domani"},
+        {fr: "Hier", it: "Ieri"}, {fr: "La semaine", it: "La settimana"},
+        {fr: "L'année", it: "L'anno"}, {fr: "Le mois", it: "Il mese"},
+        {fr: "Le jour", it: "Il giorno"}, {fr: "L'heure", it: "L'ora"},
+        {fr: "La minute", it: "Il minuto"}, {fr: "Le matin", it: "La mattina"},
+        {fr: "L'après-midi", it: "Il pomeriggio"}, {fr: "Le soir", it: "La sera"},
+        {fr: "Lundi", it: "Lunedì"}, {fr: "Mardi", it: "Martedì"},
+        {fr: "Mercredi", it: "Mercoledì"}, {fr: "Jeudi", it: "Giovedì"},
+        {fr: "Vendredi", it: "Venerdì"}, {fr: "Samedi", it: "Sabato"},
+        {fr: "Dimanche", it: "Domenica"}, {fr: "Le week-end", it: "Il fine settimana"},
+        {fr: "Maintenant", it: "Adesso"}, {fr: "Plus tard", it: "Più tardi"}
+    ],
+    "11. Les transports": [
+        {fr: "La voiture", it: "La macchina"}, {fr: "Le train", it: "Il treno"},
+        {fr: "Le vélo", it: "La bicicletta"}, {fr: "L'autobus", it: "L'autobus"},
+        {fr: "L'avion", it: "L'aereo"}, {fr: "Le bateau", it: "La nave"},
+        {fr: "Le métro", it: "La metropolitana"}, {fr: "Le taxi", it: "Il taxi"},
+        {fr: "Le billet", it: "Il biglietto"}, {fr: "Le voyage", it: "Il viaggio"},
+        {fr: "L'aéroport", it: "L'aeroporto"}, {fr: "Le quai", it: "Il binario"},
+        {fr: "L'arrêt de bus", it: "La fermata dell'autobus"}, {fr: "Le conducteur", it: "Il conducente"},
+        {fr: "Partir", it: "Partire"}, {fr: "Arriver", it: "Arrivare"},
+        {fr: "Voyager", it: "Viaggiare"}, {fr: "Prendre le train", it: "Prendere il treno"},
+        {fr: "Un retard", it: "Un ritardo"}, {fr: "À l'heure", it: "In orario"},
+        {fr: "La carte / le plan", it: "La mappa"}, {fr: "Les bagages", it: "I bagagli"}
+    ],
+    "12. Se repérer et s'orienter": [
+        {fr: "À droite", it: "A destra"}, {fr: "À gauche", it: "A sinistra"},
+        {fr: "Tout droit", it: "Dritto"}, {fr: "Où est... ?", it: "Dove si trova... ?"},
+        {fr: "Nord", it: "Nord"}, {fr: "Sud", it: "Sud"},
+        {fr: "Est", it: "Est"}, {fr: "Ouest", it: "Ovest"},
+        {fr: "Près de", it: "Vicino a"}, {fr: "Loin de", it: "Lontano da"},
+        {fr: "En face de", it: "Di fronte a"}, {fr: "À côté de", it: "Accanto a"},
+        {fr: "Ici", it: "Qui"}, {fr: "Là-bas", it: "Là"},
+        {fr: "Au coin", it: "All'angolo"}, {fr: "Traverser", it: "Attraversare"},
+        {fr: "Tourner", it: "Girare"}, {fr: "Le plan de la ville", it: "La pianta della città"},
+        {fr: "Perdu", it: "Perso"}, {fr: "Chercher", it: "Cercare"},
+        {fr: "Trouver", it: "Trovare"}, {fr: "L'adresse", it: "L'indirizzo"}
+    ],
+    "13. La famille et les proches": [
+        {fr: "Le père", it: "Il padre"}, {fr: "La mère", it: "La madre"},
+        {fr: "Le frère", it: "Il fratello"}, {fr: "La sœur", it: "La sorella"},
+        {fr: "Le fils", it: "Il figlio"}, {fr: "La fille (enfant)", it: "La figlia"},
+        {fr: "Les parents", it: "I genitori"}, {fr: "Le grand-père", it: "Il nonno"},
+        {fr: "La grand-mère", it: "La nonna"}, {fr: "L'oncle", it: "Lo zio"},
+        {fr: "La tante", it: "La zia"}, {fr: "Le cousin", it: "Il cugino"},
+        {fr: "Le mari", it: "Il marito"}, {fr: "La femme (épouse)", it: "La moglie"},
+        {fr: "Un ami", it: "Un amico"}, {fr: "Une amie", it: "Un'amica"},
+        {fr: "Le bébé", it: "Il neonato"}, {fr: "L'enfant", it: "Il bambino"},
+        {fr: "Le petit-fils", it: "Il nipote"}, {fr: "La petite-fille", it: "La nipote"},
+        {fr: "La famille", it: "La famiglia"}
+    ],
+    "14. Le corps humain": [
+        {fr: "La tête", it: "La testa"}, {fr: "La main", it: "La mano"},
+        {fr: "Le bras", it: "Il braccio"}, {fr: "La jambe", it: "La gamba"},
+        {fr: "Les yeux", it: "Gli occhi"}, {fr: "Le nez", it: "Il naso"},
+        {fr: "La bouche", it: "La bocca"}, {fr: "Les oreilles", it: "Le orecchie"},
+        {fr: "Les cheveux", it: "I capelli"}, {fr: "Le pied", it: "Il piede"},
+        {fr: "Le doigt", it: "Il dito"}, {fr: "Le dos", it: "La schiena"},
+        {fr: "Le cœur", it: "Il cuore"}, {fr: "Le ventre", it: "La pancia"},
+        {fr: "Le cou", it: "Il collo"}, {fr: "La dent", it: "Il dente"},
+        {fr: "La langue", it: "La lingua"}, {fr: "Le visage", it: "Il viso"},
+        {fr: "Le genou", it: "Il ginocchio"}, {fr: "La gorge", it: "La gola"},
+        {fr: "L'épaule", it: "La spalla"}
+    ],
+    "15. Les verbes d'action indispensables": [
+        {fr: "Parler", it: "Parlare"}, {fr: "Manger", it: "Mangiare"},
+        {fr: "Boire", it: "Bere"}, {fr: "Aller", it: "Andare"},
+        {fr: "Avoir", it: "Avere"}, {fr: "Être", it: "Essere"},
+        {fr: "Faire", it: "Fare"}, {fr: "Prendre", it: "Prendere"},
+        {fr: "Voir", it: "Vedere"}, {fr: "Entendre", it: "Sentire"},
+        {fr: "Écrire", it: "Scrivere"}, {fr: "Lire", it: "Leggere"},
+        {fr: "Comprendre", it: "Capire"}, {fr: "Savoir", it: "Sapere"},
+        {fr: "Pouvoir", it: "Potere"}, {fr: "Vouloir", it: "Volere"},
+        {fr: "Dormir", it: "Dormire"}, {fr: "Acheter", it: "Comprare"},
+        {fr: "Payer", it: "Pagare"}, {fr: "Demander", it: "Chiedere"},
+        {fr: "Donner", it: "Dare"}, {fr: "Habiter", it: "Abitare"},
+        {fr: "Travailler", it: "Lavorare"}, {fr: "Venir", it: "Venire"}
+    ]
+};
+
+let carnetErreurs = [];
+let testEnCours = [];
+let indexActuel = 0;
+let modeTest = 'normal';
+
+window.onload = function() {
+    const selectTheme = document.getElementById('select-theme');
+    const selectThemeTest = document.getElementById('select-theme-test');
+    
+    for (let theme in vocabulaire) {
+        let opt1 = document.createElement('option'); opt1.value = theme; opt1.innerHTML = theme;
+        selectTheme.appendChild(opt1);
+
+        let opt2 = document.createElement('option'); opt2.value = theme; opt2.innerHTML = theme;
+        selectThemeTest.appendChild(opt2);
+    }
+    loadVocabTable();
+    updateErrorView();
+
+    document.getElementById('user-answer').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') checkAnswer();
+    });
+};
+
+function switchSection(sectionId) {
+    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+    document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById('section-' + sectionId).classList.remove('hidden');
+    event.target.classList.add('active');
+
+    if(sectionId === 'erreurs') updateErrorView();
+}
+
+function loadVocabTable() {
+    const theme = document.getElementById('select-theme').value;
+    const body = document.getElementById('vocab-body');
+    const countDiv = document.getElementById('count-vocab');
+    body.innerHTML = '';
+    
+    const mots = vocabulaire[theme];
+    countDiv.innerText = `${mots.length} mots disponibles dans cette liste.`;
+    
+    mots.forEach(item => {
+        let row = `<tr><td>${item.fr}</td><td><strong>${item.it}</strong></td></tr>`;
+        body.innerHTML += row;
+    });
+}
+
+function startTest(mode) {
+    modeTest = mode;
+    if (mode === 'normal') {
+        const theme = document.getElementById('select-theme-test').value;
+        testEnCours = [...vocabulaire[theme]];
+    } else {
+        if (carnetErreurs.length === 0) {
+            alert("Aucune erreur à réviser ! Vous êtes au top.");
+            return;
+        }
+        testEnCours = [...carnetErreurs];
+    }
+    
+    testEnCours.sort(() => Math.random() - 0.5);
+    indexActuel = 0;
+    
+    document.getElementById('test-setup').classList.add('hidden');
+    document.getElementById('test-core').classList.remove('hidden');
+    showNextQuestion();
+}
+
+function showNextQuestion() {
+    if (indexActuel < testEnCours.length) {
+        document.getElementById('test-progress').innerText = `Question ${indexActuel + 1} sur ${testEnCours.length}`;
+        document.getElementById('word-to-translate').innerText = testEnCours[indexActuel].fr;
+        document.getElementById('user-answer').value = '';
+        document.getElementById('user-answer').focus();
+        document.getElementById('feedback').classList.add('hidden');
+    } else {
+        alert("Session de test validée !");
+        document.getElementById('test-setup').classList.remove('hidden');
+        document.getElementById('test-core').classList.add('hidden');
+        updateErrorView();
+    }
+}
+
+function checkAnswer() {
+    const userAnswer = document.getElementById('user-answer').value.trim().toLowerCase();
+    const correctAnswer = testEnCours[indexActuel].it.trim().toLowerCase();
+    const feedback = document.getElementById('feedback');
+    
+    feedback.classList.remove('hidden', 'correct', 'incorrect');
+    
+    if (userAnswer === correctAnswer) {
+        feedback.innerText = "Parfait ! C'est la bonne réponse.";
+        feedback.classList.add('correct');
+        
+        if (modeTest === 'errors') {
+            carnetErreurs = carnetErreurs.filter(item => item.fr !== testEnCours[indexActuel].fr);
+        }
+        indexActuel++;
+        setTimeout(showNextQuestion, 1200);
+    } else {
+        feedback.innerText = `Incorrect. Réponse attendue : ${testEnCours[indexActuel].it}`;
+        feedback.classList.add('incorrect');
+        
+        if (!carnetErreurs.some(item => item.fr === testEnCours[indexActuel].fr)) {
+            carnetErreurs.push(testEnCours[indexActuel]);
+        }
+        indexActuel++;
+        setTimeout(showNextQuestion, 2800);
+    }
+    document.getElementById('error-count').innerText = carnetErreurs.length;
+}
+
+function updateErrorView() {
+    document.getElementById('error-count').innerText = carnetErreurs.length;
+    const body = document.getElementById('error-body');
+    body.innerHTML = '';
+    
+    if (carnetErreurs.length === 0) {
+        body.innerHTML = `<tr><td colspan="3" style="text-align:center;">Votre carnet est vierge. Bravo !</td></tr>`;
+        document.getElementById('btn-test-errors').disabled = true;
+        return;
+    }
+    
+    document.getElementById('btn-test-errors').disabled = false;
+    
+    carnetErreurs.forEach((item, index) => {
+        let row = `<tr>
+            <td>${item.fr}</td>
+            <td><strong>${item.it}</strong></td>
+            <td><button onclick="removeError(${index})" style="padding: 5px 10px; font-size:12px; background-color:#ccc; color:black;">Retirer</button></td>
+        </tr>`;
+        body.innerHTML += row;
+    });
+}
+
+function removeError(index) {
+    carnetErreurs.splice(index, 1);
+    updateErrorView();
+}
+</script>
+
+</body>
+</html>
